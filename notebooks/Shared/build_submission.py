@@ -70,33 +70,72 @@ melted_sample.head()
 # COMMAND ----------
 
 def complete_sample(data, cal):
+  """
+   Make item_id, dept_id, cat_id, store_id, and state_id from id column
+   Adding some columns to match the encoded 
+   
+   Used .split tutorial at https://www.tutorialspoint.com/python/string_split.htm
+   and this tutorial https://www.geeksforgeeks.org/create-a-column-using-for-loop-in-pandas-dataframe/
+  """
   # TO-DO: Add a docstring   
   
-  # Make item_id, dept_id, cat_id, store_id, and state_id from id column
-  # Adding some columns to match the encoded 
+  
   
   # TO-DO: Use the .split functionality
   # https://www.tutorialspoint.com/python/string_split.htm
   # Does this work for all records?
-  data['item_id'] = data['id'][0:1][0][0:13]
-  data['dept_id'] = data['id'][0:1][0][0:9]
-  data['cat_id'] = data['id'][0:1][0][0:7]
-  data['store_id'] = data['id'][0:1][0][14:18]
-  data['state_id'] = data['id'][0:1][0][14:16]
+  
+  #Initialize lists
+  item_ids = []
+  dept_ids = []
+  cat_ids = []
+  store_ids = []
+  state_ids = []
+  
+  for id in data['id']:
+    split_str = id.split('_')
+    
+    #Pull info from split string     
+    item_id = split_str[0] + '_' + split_str[1] + '_' + split_str[2]
+    dept_id = split_str[0] + '_' + split_str[1]
+    cat_id = split_str[0]
+    store_id = split_str[3] + '_' + split_str[4]
+    state_id = split_str[3]
+    
+    #append to specific list
+    item_ids.append(item_id)
+    dept_ids.append(dept_id)
+    cat_ids.append(cat_id)
+    store_ids.append(store_id)
+    state_ids.append(state_id)
+  
+  #Make new columns using the info from the lists created
+  data['item_id'] = item_ids
+  data['dept_id'] = dept_ids
+  data['cat_id'] = cat_ids
+  data['store_id'] = store_ids
+  data['state_id'] = state_ids
+  
+  # Previous solution
+  #data['item_id'] = data['id'][0:1][0][0:13]
+  #data['dept_id'] = data['id'][0:1][0][0:9]
+  #data['cat_id'] = data['id'][0:1][0][0:7]
+  #data['store_id'] = data['id'][0:1][0][14:18]
+  #data['state_id'] = data['id'][0:1][0][14:16]
   
   # Get w_day and weekday column by joining with calendar table
   cal = cal.rename(columns = {'d': 'Date'})
-  complete_sample_melted = melted_sample.merge(cal[['Date', 'wday', 'weekday']], how='left', on='Date')
+  complete_sample_melted = melted_sample.merge(cal[['Date', 'wday']], how='left', on='Date')
   
   # Reorder columns
-  cols = ['id','item_id','dept_id','cat_id','store_id','state_id','Date','weekday','wday','Predictions']
+  cols = ['id','item_id','dept_id','cat_id','store_id','state_id','Date','wday','Predictions']
   complete_sample = complete_sample_melted[cols]
   
   # Rename Predictions column to Prediction
   complete_sample.rename(columns={"Predictions": "Prediction"})
   
   #  Write to csv   
-#      complete_sample.to_csv('/dbfs/FileStore/tables/sample_melted.csv', index=False)
+  complete_sample.to_csv('/dbfs/FileStore/tables/sample_melted.csv', index=False)
   
   return complete_sample  
 
@@ -112,3 +151,19 @@ display(dbutils.fs.ls("dbfs:/FileStore/tables/"))
 
 # COMMAND ----------
 
+# DBTITLE 1,Below is sample code that helped with data engineering
+for id in melted_sample['id'].head():
+  split_str = id.split('_')
+  item_id = split_str[0] + '_' + split_str[1] + '_' + split_str[2]
+  print(item_id)
+
+# COMMAND ----------
+
+for id in melted_sample['id'].head():
+    split_str = id.split('_')
+    item_id = split_str[0] + '_' + split_str[1] + '_' + split_str[2]
+    dept_id = split_str[0] + '_' + split_str[1]
+    cat_id = split_str[0]
+    store_id = split_str[3] + '_' + split_str[4]
+    state_id = split_str[3]
+    print(item_id, dept_id, cat_id, store_id, state_id)
