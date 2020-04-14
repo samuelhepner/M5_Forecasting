@@ -69,10 +69,10 @@ melted_sample.head()
 
 # COMMAND ----------
 
-def complete_sample(data, cal):
+def complete_sample(data, cal, csv=False):
   """
    Make item_id, dept_id, cat_id, store_id, and state_id from id column
-   Adding some columns to match the encoded 
+   Adding some columns to match the encoded.
    
    Used .split tutorial at https://www.tutorialspoint.com/python/string_split.htm
    and this tutorial https://www.geeksforgeeks.org/create-a-column-using-for-loop-in-pandas-dataframe/
@@ -134,8 +134,9 @@ def complete_sample(data, cal):
   # Rename Predictions column to Prediction
   complete_sample.rename(columns={"Predictions": "Prediction"})
   
-  #  Write to csv   
-  complete_sample.to_csv('/dbfs/FileStore/tables/sample_melted.csv', index=False)
+  #  Write to csv 
+  if csv is True:
+    complete_sample.to_csv('/dbfs/FileStore/tables/sample_melted.csv', index=False)
   
   return complete_sample  
 
