@@ -340,20 +340,29 @@ class WRMSSEEvaluator(object):
             # Combining rows by the sum of the group id
             train_y = train_df.groupby(group_id)[train_target_columns].sum()
             scale = []
+            # Going through each row
             for _, row in train_y.iterrows():
+                # Gets the max of each row and only looks at row values that are not equal to 0
                 series = row.values[np.argmax(row.values != 0):]
+                # Then append the mse to the scale list
                 scale.append(((series[1:] - series[:-1]) ** 2).mean())
+                
+            # Setting class attributes to new values
             setattr(self, f'lv{i + 1}_scale', np.array(scale))
             setattr(self, f'lv{i + 1}_train_df', train_y)
             setattr(self, f'lv{i + 1}_valid_df', valid_df.groupby(group_id)[valid_target_columns].sum())
 
             lv_weight = weight_df.groupby(group_id)[weight_columns].sum().sum(axis=1)
             setattr(self, f'lv{i + 1}_weight', lv_weight / lv_weight.sum())
-
+    """
+    Building the weight dataframe from columns in other data sets
+    """
     def get_weight_df(self) -> pd.DataFrame:
         day_to_week = self.calendar.set_index('d')['wm_yr_wk'].to_dict()
         weight_df = self.train_df[['item_id', 'store_id'] + self.weight_columns].set_index(['item_id', 'store_id'])
         weight_df = weight_df.stack().reset_index().rename(columns={'level_2': 'd', 0: 'value'})
+        
+        # I'm sure what the map function is doing here
         weight_df['wm_yr_wk'] = weight_df['d'].map(day_to_week)
 
         weight_df = weight_df.merge(self.prices, how='left', on=['item_id', 'store_id', 'wm_yr_wk'])
@@ -388,11 +397,23 @@ class WRMSSEEvaluator(object):
 
 # COMMAND ----------
 
+#spark.read.csv("dbfs:/FileStore/tables/sales_train_validation_calendar.csv", header=True)
+
+# COMMAND ----------
+
 # DBTITLE 1,Example of running the evaluation metric
-# train_df = pd.read_csv('../input/m5-forecasting-accuracy/sales_train_validation.csv')
-# train_fold_df = train_df.iloc[:, :-28]
-# valid_fold_df = train_df.iloc[:, -28:]
+train_df = pd.read_csv("/dbfs/FileStore/tables/sales_train_validation.csv")
+train_fold_df = train_df.iloc[:, :-28]
+pd.set_option("display.max_columns", 5)
+print(train_fold_df.shape)
+print("Train \n", train_fold_df.head(10))
+valid_fold_df = train_df.iloc[:, -28:]
+print(valid_fold_df.shape)
+print("Valid \n", valid_fold_df.head(10))
 # valid_preds = valid_fold_df.copy() + np.random.randint(100, size=valid_fold_df.shape)
 
 # evaluator = WRMSSEEvaluator(train_fold_df, valid_fold_df, calendar, prices)
 # evaluator.score(valid_preds)
+
+# COMMAND ----------
+
